@@ -2,69 +2,39 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý tài liệu GLAM</title>
+    <title>Quản lý GLAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; }
-        .header { background: #1e1e1e; padding: 20px; text-align: center; border-bottom: 3px solid #ffcc00; }
-        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
-        
-        /* Thanh dẫn đường (Breadcrumb) */
-        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 20px; color: #ffcc00; }
-        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
-
-        /* Danh sách dạng bảng */
-        table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 10px; overflow: hidden; }
-        th { background: #333; padding: 15px; text-align: left; color: #ffcc00; }
-        td { padding: 15px; border-bottom: 1px solid #222; }
-        tr:hover { background: #252525; }
-
-        .folder { color: #ffcc00; font-weight: bold; cursor: pointer; }
-        .file { color: #e0e0e0; }
-        .btn { padding: 5px 10px; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
-        .btn-view { background: #17a2b8; color: white; text-decoration: none; font-size: 13px; padding: 6px 12px; }
-        .btn-del { background: #dc3545; color: white; margin-left: 5px; }
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; color: #ffcc00; margin-bottom: 20px; }
+        .item { background: #1e1e1e; padding: 15px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #333; }
+        .item:hover { border-color: #ffcc00; }
+        .folder-icon { color: #ffcc00; margin-right: 10px; }
+        .file-icon { color: #aaa; margin-right: 10px; }
+        .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; text-decoration: none; }
     </style>
 </head>
 <body>
-
-<div class="header">
-    <h1 style="color:#ffcc00; margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
-    <div style="color:#ffcc00; margin-top:5px;">格琳电子有限公司</div>
-</div>
-
-<div class="container">
-    <div class="breadcrumb" id="bc">Vị trí: <span onclick="go('')">Gốc</span></div>
-
-    <table>
-        <thead>
-            <tr>
-                <th>Tên mục</th>
-                <th width="150">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody id="list"></tbody>
-    </table>
-</div>
+    <h2 style="color:#ffcc00">HỆ THỐNG TÀI LIỆU GLAM</h2>
+    <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
+    <div id="list"></div>
 
 <script>
     let currentPath = "";
 
-    // Hàm di chuyển giữa các thư mục
-    async function go(path) {
+    async function nav(path) {
         currentPath = path;
-        
-        // Cập nhật thanh Breadcrumb
+        // Cập nhật Breadcrumb
         const bc = document.getElementById('bc');
-        bc.innerHTML = 'Vị trí: <span onclick="go(\'\')">Gốc</span>';
-        let step = "";
+        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
+        let temp = "";
         path.split('/').filter(p => p).forEach(p => {
-            step += (step ? '/' : '') + p;
-            const target = step;
-            bc.innerHTML += ` / <span onclick="go('${target.replace(/'/g, "\\'")}')">${p}</span>`;
+            temp += (temp ? '/' : '') + p;
+            const target = temp;
+            bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
         });
 
-        // Tải dữ liệu từ máy chủ
+        // Lấy danh sách
         const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
         const items = await res.json();
         
@@ -72,41 +42,21 @@
         list.innerHTML = items.map(item => {
             const itemPath = path ? `${path}/${item.name}` : item.name;
             const safePath = itemPath.replace(/'/g, "\\'");
-            
+
             if (item.isDir) {
-                // Nếu là thư mục
-                return `
-                    <tr>
-                        <td class="folder" onclick="go('${safePath}')">
-                            <i class="fas fa-folder"></i> ${item.name}
-                        </td>
-                        <td>
-                            <button class="btn btn-del" onclick="del('${safePath}')">Xóa</button>
-                        </td>
-                    </tr>`;
+                return `<div class="item" onclick="nav('${safePath}')">
+                            <span><i class="fas fa-folder folder-icon"></i><b>${item.name}</b></span>
+                            <span style="color:#ffcc00">Mở thư mục ></span>
+                        </div>`;
             } else {
-                // Nếu là file
-                return `
-                    <tr>
-                        <td class="file"><i class="fas fa-file-alt"></i> ${item.name}</td>
-                        <td>
-                            <a href="/api/view/${encodeURIComponent(itemPath)}" target="_blank" class="btn btn-view">Xem</a>
-                            <button class="btn btn-del" onclick="del('${safePath}')">Xóa</button>
-                        </td>
-                    </tr>`;
+                return `<div class="item">
+                            <span><i class="fas fa-file file-icon"></i>${item.name}</span>
+                            <a href="/api/view/${encodeURIComponent(itemPath)}" target="_blank" class="btn-view">Xem file</a>
+                        </div>`;
             }
         }).join('');
     }
-
-    async function del(p) {
-        if(confirm("Bạn có chắc muốn xóa?")) {
-            await fetch(`/api/delete/${encodeURIComponent(p)}`, { method: 'DELETE' });
-            go(currentPath);
-        }
-    }
-
-    // Khởi động trang web
-    go("");
+    nav("");
 </script>
 </body>
 </html>
