@@ -10,34 +10,37 @@ app.use(fileUpload());
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// API liệt kê nội dung: Quan trọng nhất để mở nhiều thư mục
-app.get('/api/list/:path(*)', (req, res) => {
-    const relPath = decodeURIComponent(req.params.path || "");
-    const fullPath = path.join(uploadDir, relPath);
-
-    if (!fs.existsSync(fullPath)) return res.json([]);
-
-    try {
-        const items = fs.readdirSync(fullPath, { withFileTypes: true });
-        const result = items.map(item => ({
-            name: item.name,
-            isDir: item.isDirectory() // Trả về đúng/sai nếu là thư mục
-        }));
-        res.json(result);
-    } catch (err) {
-        res.status(500).json([]);
-    }
+// Upload file
+app.post('/upload', (req, res) => {
+    if (!req.files || Object.keys(req.files).length === 0) return res.send('No files');
+    let file = req.files.file;
+    file.mv(path.join(uploadDir, file.name), (err) => {
+        if (err) return res.send('error');
+        res.send('ok');
+    });
 });
 
-// API xem file
-app.get('/api/view/:path(*)', (req, res) => {
-    const filePath = path.join(uploadDir, decodeURIComponent(req.params.path));
-    if (fs.existsSync(filePath)) {
-        res.sendFile(filePath);
-    } else {
-        res.status(404).send("File không tồn tại");
-    }
+// List files
+app.get('/files', (req, res) => {
+    fs.readdir(uploadDir, (err, files) => {
+        res.json(files || []);
+    });
 });
 
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log("GLAM System Ready!"));
+// Download
+app.get('/files/:name', (req, res) => {
+    res.download(path.join(uploadDir, req.params.name));
+});
+
+// Xóa file (MỚI)
+app.delete('/delete/:name', (req, res) => {
+    const filePath = path.join(uploadDir, req.params.name);
+    fs.unlink(filePath, (err) => {
+        if (err) return res.status(500).send('error');
+        res.send('ok');
+    });
+});
+
+app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
+    console.log("Server running");
+});

@@ -2,61 +2,74 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý GLAM</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kho Tài Liệu Của Đạt</title>
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; color: #ffcc00; margin-bottom: 20px; }
-        .item { background: #1e1e1e; padding: 15px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #333; }
-        .item:hover { border-color: #ffcc00; }
-        .folder-icon { color: #ffcc00; margin-right: 10px; }
-        .file-icon { color: #aaa; margin-right: 10px; }
-        .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; text-decoration: none; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
+        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
+        h2 { color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
+        .upload-section { display: flex; gap: 10px; margin-bottom: 30px; background: #f9f9f9; padding: 15px; border-radius: 8px; }
+        input[type="file"] { flex-grow: 1; }
+        button { cursor: pointer; border: none; border-radius: 5px; padding: 8px 15px; transition: 0.3s; }
+        .btn-upload { background: #28a745; color: white; }
+        .btn-upload:hover { background: #218838; }
+        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; transition: background 0.2s; }
+        .file-item:hover { background: #fcfcfc; }
+        .file-item a { text-decoration: none; color: #007bff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
+        .btn-delete { background: #ff4d4d; color: white; font-size: 12px; }
+        .btn-delete:hover { background: #cc0000; }
+        ul { list-style: none; padding: 0; }
     </style>
 </head>
 <body>
-    <h2 style="color:#ffcc00">HỆ THỐNG TÀI LIỆU GLAM</h2>
-    <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
-    <div id="list"></div>
+
+<div class="container">
+    <h2>📁 KHO TÀI LIỆU</h2>
+    
+    <div class="upload-section">
+        <input type="file" id="file">
+        <button class="btn-upload" onclick="upload()">Tải lên</button>
+    </div>
+
+    <ul id="list"></ul>
+</div>
 
 <script>
-    let currentPath = "";
-
-    async function nav(path) {
-        currentPath = path;
-        // Cập nhật Breadcrumb
-        const bc = document.getElementById('bc');
-        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
-        let temp = "";
-        path.split('/').filter(p => p).forEach(p => {
-            temp += (temp ? '/' : '') + p;
-            const target = temp;
-            bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
-        });
-
-        // Lấy danh sách
-        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
-        const items = await res.json();
+    async function upload() {
+        let fileInput = document.getElementById('file');
+        if (!fileInput.files[0]) return alert("Vui lòng chọn file!");
         
-        const list = document.getElementById('list');
-        list.innerHTML = items.map(item => {
-            const itemPath = path ? `${path}/${item.name}` : item.name;
-            const safePath = itemPath.replace(/'/g, "\\'");
+        let form = new FormData();
+        form.append('file', fileInput.files[0]);
 
-            if (item.isDir) {
-                return `<div class="item" onclick="nav('${safePath}')">
-                            <span><i class="fas fa-folder folder-icon"></i><b>${item.name}</b></span>
-                            <span style="color:#ffcc00">Mở thư mục ></span>
-                        </div>`;
-            } else {
-                return `<div class="item">
-                            <span><i class="fas fa-file file-icon"></i>${item.name}</span>
-                            <a href="/api/view/${encodeURIComponent(itemPath)}" target="_blank" class="btn-view">Xem file</a>
-                        </div>`;
-            }
-        }).join('');
+        await fetch('/upload', { method: 'POST', body: form });
+        fileInput.value = ''; // Reset input
+        load();
     }
-    nav("");
+
+    async function removeFile(name) {
+        if (confirm(`Bạn muốn xóa file: ${name}?`)) {
+            await fetch(`/delete/${name}`, { method: 'DELETE' });
+            load();
+        }
+    }
+
+    async function load() {
+        let res = await fetch('/files');
+        let data = await res.json();
+        let list = document.getElementById('list');
+        list.innerHTML = '';
+
+        data.forEach(f => {
+            list.innerHTML += `
+                <li class="file-item">
+                    <a href="/files/${f}" target="_blank">📄 ${f}</a>
+                    <button class="btn-delete" onclick="removeFile('${f}')">Xóa</button>
+                </li>`;
+        });
+    }
+    load();
 </script>
+
 </body>
 </html>
