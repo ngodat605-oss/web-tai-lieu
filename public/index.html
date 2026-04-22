@@ -5,124 +5,32 @@
     <title>Hệ thống Tài liệu GLAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --gold: #ffcc00; --dark: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--dark); color: white; margin: 0; padding-bottom: 50px; }
+        :root { --glam-gold: #ffcc00; --dark-bg: #121212; --card-bg: #1e1e1e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--dark-bg); color: white; margin: 0; padding-bottom: 50px; }
         
-        /* Tên công ty GLAM */
-        .header { background: var(--card); padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--gold); }
-        .header h1 { color: var(--gold); margin: 0; font-size: 35px; text-transform: uppercase; }
-        .header p { color: var(--gold); margin: 10px 0 0; font-size: 22px; letter-spacing: 2px; }
+        /* TIÊU ĐỀ CÔNG TY */
+        .header { background: var(--card-bg); padding: 45px 20px; text-align: center; border-bottom: 5px solid var(--glam-gold); box-shadow: 0 4px 15px rgba(0,0,0,0.5); }
+        .header h1 { color: var(--glam-gold); margin: 0; font-size: 38px; text-transform: uppercase; letter-spacing: 1px; }
+        .header h2 { color: var(--glam-gold); margin: 10px 0 0; font-size: 26px; font-weight: normal; letter-spacing: 3px; }
 
         .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         
-        /* Thanh dẫn đường */
-        .breadcrumb { background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 30px; color: var(--gold); border-left: 5px solid var(--gold); font-size: 18px; }
-        .breadcrumb span { cursor: pointer; text-decoration: underline; margin-right: 8px; }
+        /* THANH DẪN ĐƯỜNG (BREADCRUMB) */
+        .breadcrumb { background: #252525; padding: 15px 20px; border-radius: 10px; margin-bottom: 30px; color: var(--glam-gold); border-left: 6px solid var(--glam-gold); font-size: 18px; display: flex; align-items: center; }
+        .breadcrumb i { margin-right: 10px; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin-right: 8px; transition: 0.2s; }
+        .breadcrumb span:hover { color: white; }
 
-        /* Lưới thư mục ô vuông lớn */
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-bottom: 50px; }
-        .folder-box { background: var(--card); padding: 35px 20px; border-radius: 15px; text-align: center; border: 2px solid #333; cursor: pointer; transition: 0.3s; }
-        .folder-box:hover { border-color: var(--gold); transform: translateY(-8px); background: #2a2a2a; }
-        .folder-box i { font-size: 60px; color: var(--gold); margin-bottom: 20px; display: block; }
+        /* KHU VỰC THƯ MỤC (DẠNG Ô VUÔNG LỚN) */
+        .section-title { color: var(--glam-gold); font-size: 22px; margin-bottom: 20px; text-transform: uppercase; border-bottom: 1px solid #333; padding-bottom: 10px; }
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-bottom: 60px; }
+        .folder-box { background: var(--card-bg); padding: 40px 20px; border-radius: 15px; text-align: center; border: 2px solid #333; cursor: pointer; transition: 0.3s ease; box-shadow: 0 4px 6px rgba(0,0,0,0.3); }
+        .folder-box:hover { border-color: var(--glam-gold); transform: translateY(-10px); background: #262626; box-shadow: 0 10px 20px rgba(255, 204, 0, 0.2); }
+        .folder-box i { font-size: 65px; color: var(--glam-gold); margin-bottom: 20px; display: block; }
         .folder-name { font-weight: bold; font-size: 18px; color: #fff; line-height: 1.4; word-break: break-all; }
 
-        /* Bảng danh sách Files bên dưới */
-        .file-list-title { color: var(--gold); font-size: 22px; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--gold); }
-        .file-table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
-        .file-table th { background: #333; color: var(--gold); padding: 15px; text-align: left; }
-        .file-table td { padding: 15px; border-bottom: 1px solid #282828; }
-        .btn-view { background: #007bff; color: white; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.2s; }
-        .btn-view:hover { background: #0056b3; }
-        
-        i.fa-file-pdf { color: #ff4444; margin-right: 10px; }
-        i.fa-file-excel { color: #28a745; margin-right: 10px; }
-    </style>
-</head>
-<body>
-
-<div class="header">
-    <h1>CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
-    <p>格琳电子有限公司</p>
-</div>
-
-<div class="container">
-    <div class="breadcrumb" id="path-bar">Vị trí: <span onclick="nav('')">Gốc</span></div>
-
-    <div class="folder-grid" id="folder-area"></div>
-
-    <div class="file-list-title"><i class="fas fa-file-alt"></i> DANH SÁCH TẬP TIN</div>
-    <table class="file-table">
-        <thead>
-            <tr>
-                <th>Tên tài liệu</th>
-                <th width="120">Thao tác</th>
-            </tr>
-        </thead>
-        <tbody id="file-area"></tbody>
-    </table>
-</div>
-
-<script>
-    let currentPath = "";
-
-    async function nav(path) {
-        currentPath = path;
-        
-        // 1. Cập nhật thanh dẫn đường (Breadcrumb)
-        const pathBar = document.getElementById('path-bar');
-        pathBar.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
-        let step = "";
-        path.split('/').filter(p => p).forEach(p => {
-            step += (step ? '/' : '') + p;
-            const target = step;
-            pathBar.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
-        });
-
-        // 2. Lấy dữ liệu từ Server
-        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
-        const items = await res.json();
-        
-        const folderArea = document.getElementById('folder-area');
-        const fileArea = document.getElementById('file-area');
-        
-        // Tách riêng Folder và File
-        const folders = items.filter(i => i.isDir);
-        const files = items.filter(i => !i.isDir);
-
-        // 3. Hiển thị Folder (Dạng ô vuông lớn)
-        folderArea.innerHTML = folders.map(f => {
-            const p = currentPath ? `${currentPath}/${f.name}` : f.name;
-            const safePath = p.replace(/'/g, "\\'");
-            return `
-                <div class="folder-box" onclick="nav('${safePath}')">
-                    <i class="fas fa-folder"></i>
-                    <div class="folder-name">${f.name}</div>
-                </div>`;
-        }).join('');
-
-        // 4. Hiển thị File (Dạng danh sách bảng)
-        fileArea.innerHTML = files.map(f => {
-            const p = currentPath ? `${currentPath}/${f.name}` : f.name;
-            // Chọn biểu tượng theo loại file
-            let icon = 'fa-file-alt';
-            if(f.name.toLowerCase().endsWith('.pdf')) icon = 'fa-file-pdf';
-            if(f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls')) icon = 'fa-file-excel';
-
-            return `
-                <tr>
-                    <td><i class="fas ${icon}"></i>${f.name}</td>
-                    <td><a href="/api/view/${encodeURIComponent(p)}" target="_blank" class="btn-view">XEM</a></td>
-                </tr>`;
-        }).join('');
-        
-        // Thông báo nếu trống
-        if (folders.length === 0 && files.length === 0) {
-            folderArea.innerHTML = '<p style="color:#666;">Thư mục này trống</p>';
-        }
-    }
-
-    // Khởi động trang web
-    nav("");
-</script>
-</body>
-</html>
+        /* KHU VỰC TẬP TIN (DẠNG DANH SÁCH BẢNG) */
+        .file-list-container { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
+        table { width: 100%; border-collapse: collapse; }
+        th { background: #333; color: var(--glam-gold); padding: 18px; text-align: left; font-size: 16px; }
+        td { padding: 16px; border-bottom: 1px solid #2
