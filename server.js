@@ -10,7 +10,7 @@ app.use(fileUpload());
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// 1. API lấy danh sách: Hỗ trợ đệ quy đường dẫn
+// API 1: Lấy danh sách (Hỗ trợ đường dẫn dài vô tận)
 app.get('/api/list/:path(*)', (req, res) => {
     const relPath = decodeURIComponent(req.params.path || "");
     const fullPath = path.join(uploadDir, relPath);
@@ -25,30 +25,30 @@ app.get('/api/list/:path(*)', (req, res) => {
         }));
         res.json(result);
     } catch (err) {
-        res.status(500).send("Lỗi đọc thư mục");
+        res.status(500).json([]);
     }
 });
 
-// 2. API Xem/Tải: Giải mã URL để đọc được tiếng Việt/Trung
+// API 2: Xem file (Giải mã URL chuẩn)
 app.get('/api/view/:path(*)', (req, res) => {
     const filePath = path.join(uploadDir, decodeURIComponent(req.params.path));
     if (fs.existsSync(filePath)) {
         res.sendFile(filePath);
     } else {
-        res.status(404).send("Không tìm thấy file");
+        res.status(404).send("File không tồn tại");
     }
 });
 
-// 3. API Xóa: Xóa sạch cả thư mục con bên trong
+// API 3: Xóa sạch (Xóa file hoặc cả thư mục con)
 app.delete('/api/delete/:path(*)', (req, res) => {
     const target = path.join(uploadDir, decodeURIComponent(req.params.path));
     if (fs.existsSync(target)) {
         fs.rmSync(target, { recursive: true, force: true });
-        res.send("Đã xóa");
+        res.send("OK");
     } else {
-        res.status(404).send("Mục không tồn tại");
+        res.status(404).send("Không tìm thấy");
     }
 });
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => console.log("GLAM Server is running..."));
+app.listen(PORT, '0.0.0.0', () => console.log("GLAM System: Đã sẵn sàng duyệt đa tầng!"));
