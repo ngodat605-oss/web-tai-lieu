@@ -2,68 +2,32 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Hệ thống tài liệu GLAM</title>
+    <title>Tài liệu GLAM - Đa tầng</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --primary: #ffcc00; --bg: #121212; --panel: #1e1e1e; }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; }
-        
-        /* Header trung tâm */
-        .header { background: var(--panel); padding: 25px; border-bottom: 3px solid var(--primary); text-align: center; }
-        .header h1 { color: var(--primary); margin: 0; font-size: 28px; text-transform: uppercase; }
-        .header p { color: var(--primary); margin: 5px 0 0; font-size: 18px; letter-spacing: 2px; }
-
-        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
-        
-        /* Điều hướng đường dẫn */
-        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
-        .breadcrumb span { color: var(--primary); cursor: pointer; }
-
-        /* Bảng điều khiển */
-        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
-        .card { background: var(--panel); padding: 15px; border-radius: 10px; border: 1px solid #333; }
-        input, button { padding: 10px; border-radius: 5px; border: 1px solid #444; }
-        input { background: #2a2a2a; color: white; width: calc(100% - 130px); }
-        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { opacity: 0.8; }
-        .btn-upload { background: #28a745; color: white; width: 100%; margin-top: 10px; }
-
-        /* Danh sách mục */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
-        .item { background: var(--panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #333; cursor: pointer; position: relative; }
-        .item:hover { border-color: var(--primary); }
-        .item i { font-size: 40px; margin-bottom: 10px; display: block; }
-        .item .folder-icon { color: var(--primary); }
-        .item .file-icon { color: #aaa; }
-        .item .name { font-size: 14px; word-break: break-all; height: 40px; overflow: hidden; }
-        
-        .btn-del { position: absolute; top: 5px; right: 5px; background: rgba(220,53,69,0.2); color: #ff4d4d; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
-        .btn-del:hover { background: #dc3545; color: white; }
+        body { font-family: sans-serif; background: #121212; color: white; margin: 0; }
+        .header { background: #1e1e1e; padding: 20px; text-align: center; border-bottom: 3px solid #ffcc00; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
+        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; margin-bottom: 20px; color: #ffcc00; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+        .item { background: #1a1a1a; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; position: relative; }
+        .item:hover { border-color: #ffcc00; }
+        .item i { font-size: 40px; display: block; margin-bottom: 10px; }
+        .fa-folder { color: #ffcc00; }
+        .name { font-size: 13px; word-break: break-all; }
+        .btn-del { position: absolute; top: 5px; right: 5px; color: red; background: none; border: none; cursor: pointer; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1>Công Ty TNHH Điện Tử GLAM</h1>
-    <p>格琳电子有限公司</p>
+    <h1 style="color:#ffcc00; margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
 </div>
 
 <div class="container">
-    <div class="breadcrumb" id="breadcrumb">Vị trí: <span onclick="nav('')">Root</span></div>
-
-    <div class="actions">
-        <div class="card">
-            <input type="text" id="newFolder" placeholder="Tên thư mục con...">
-            <button onclick="createFolder()">Tạo</button>
-        </div>
-        <div class="card">
-            <input type="file" id="fileInp" multiple style="width: 100%;">
-            <button class="btn-upload" onclick="doUpload()">Tải lên vị trí này</button>
-        </div>
-    </div>
-
-    <div class="grid" id="explorer"></div>
+    <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
+    <div class="grid" id="list"></div>
 </div>
 
 <script>
@@ -71,67 +35,40 @@
 
     async function nav(path) {
         currentPath = path;
-        updateBreadcrumb();
+        // Cập nhật thanh điều hướng
+        const bc = document.getElementById('bc');
+        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
+        let temp = "";
+        path.split('/').filter(p => p).forEach(p => {
+            temp += (temp ? '/' : '') + p;
+            const target = temp;
+            bc.innerHTML += ` / <span onclick="nav('${target}')">${p}</span>`;
+        });
+
+        // Lấy dữ liệu
         const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
         const items = await res.json();
         
-        const explorer = document.getElementById('explorer');
-        explorer.innerHTML = items.map(item => `
-            <div class="item" onclick="${item.isDir ? `nav('${path ? path+'/'+item.name : item.name}')` : `viewFile('${path ? path+'/'+item.name : item.name}')`}">
-                <button class="btn-del" onclick="event.stopPropagation(); deleteItem('${path ? path+'/'+item.name : item.name}')">Xóa</button>
-                <i class="fas ${item.isDir ? 'fa-folder folder-icon' : 'fa-file-alt file-icon'}"></i>
+        const div = document.getElementById('list');
+        div.innerHTML = items.map(item => `
+            <div class="item" onclick="${item.isDir ? `nav('${path ? path+'/'+item.name : item.name}')` : `view('${path ? path+'/'+item.name : item.name}')`}">
+                <button class="btn-del" onclick="event.stopPropagation(); del('${path ? path+'/'+item.name : item.name}')">X</button>
+                <i class="fas ${item.isDir ? 'fa-folder' : 'fa-file-alt'}"></i>
                 <div class="name">${item.name}</div>
             </div>
         `).join('');
     }
 
-    function updateBreadcrumb() {
-        const div = document.getElementById('breadcrumb');
-        div.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Root</span>';
-        if (currentPath) {
-            let full = "";
-            currentPath.split('/').forEach(p => {
-                full += (full ? '/' : '') + p;
-                const pathVal = full;
-                div.innerHTML += ` / <span onclick="nav('${pathVal}')">${p}</span>`;
-            });
-        }
-    }
-
-    async function createFolder() {
-        const name = document.getElementById('newFolder').value;
-        if(!name) return;
-        await fetch('/api/mkdir', {
-            method: 'POST',
-            headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ parentPath: currentPath, folderName: name })
-        });
-        document.getElementById('newFolder').value = "";
-        nav(currentPath);
-    }
-
-    async function doUpload() {
-        const inp = document.getElementById('fileInp');
-        if(!inp.files.length) return;
-        const fd = new FormData();
-        for(let f of inp.files) fd.append('files', f);
-        await fetch(`/api/upload/${encodeURIComponent(currentPath)}`, { method: 'POST', body: fd });
-        inp.value = "";
-        nav(currentPath);
-    }
-
-    function viewFile(path) {
-        window.open(`/api/view/${encodeURIComponent(path)}`, '_blank');
-    }
-
-    async function deleteItem(path) {
-        if(confirm("Bạn có chắc chắn muốn xóa?")) {
-            await fetch(`/api/delete/${encodeURIComponent(path)}`, { method: 'DELETE' });
+    function view(p) { window.open(`/api/view/${encodeURIComponent(p)}`, '_blank'); }
+    
+    async function del(p) {
+        if(confirm("Xóa mục này?")) {
+            await fetch(`/api/delete/${encodeURIComponent(p)}`, { method: 'DELETE' });
             nav(currentPath);
         }
     }
 
-    nav("");
+    nav(""); // Chạy lần đầu
 </script>
 </body>
 </html>
