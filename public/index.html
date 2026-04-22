@@ -182,3 +182,87 @@
 </script>
 </body>
 </html>
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <title>Hệ thống Tài liệu GLAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        :root { --glam-gold: #ffcc00; --bg: #121212; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; }
+        .header { background: #1e1e1e; padding: 20px; text-align: center; border-bottom: 3px solid var(--glam-gold); }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 20px; color: var(--glam-gold); }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
+        .item-box { background: #1a1a1a; padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid #333; position: relative; transition: 0.2s; }
+        .item-box:hover { border-color: var(--glam-gold); background: #252525; }
+        .item-box i { font-size: 45px; display: block; margin-bottom: 12px; }
+        .fa-folder { color: var(--glam-gold); }
+        .fa-file-alt { color: #999; }
+        .name-tag { font-size: 13px; line-height: 1.4; word-break: break-all; height: 36px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        .del-btn { position: absolute; top: 8px; right: 8px; color: #ff4d4d; border: none; background: none; cursor: pointer; opacity: 0.3; }
+        .item-box:hover .del-btn { opacity: 1; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1 style="color:var(--glam-gold); margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
+    <div style="color:var(--glam-gold); letter-spacing:2px;">格琳电子有限公司</div>
+</div>
+
+<div class="container">
+    <div class="breadcrumb" id="bc-bar">Vị trí: <span onclick="go('')">Thư mục gốc</span></div>
+    <div class="grid" id="explorer"></div>
+</div>
+
+<script>
+    let currentPath = "";
+
+    async function go(path) {
+        currentPath = path;
+        
+        // Cập nhật Breadcrumb
+        const bcBar = document.getElementById('bc-bar');
+        bcBar.innerHTML = 'Vị trí: <span onclick="go(\'\')">Gốc</span>';
+        let step = "";
+        path.split('/').filter(p => p).forEach(p => {
+            step += (step ? '/' : '') + p;
+            const target = step;
+            bcBar.innerHTML += ` / <span onclick="go('${target.replace(/'/g, "\\'")}')">${p}</span>`;
+        });
+
+        // Tải danh sách từ API
+        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
+        const items = await res.json();
+        
+        const explorer = document.getElementById('explorer');
+        explorer.innerHTML = items.map(item => {
+            const itemPath = path ? `${path}/${item.name}` : item.name;
+            const safePath = itemPath.replace(/'/g, "\\'");
+            return `
+                <div class="item-box" onclick="${item.isDir ? `go('${safePath}')` : `view('${safePath}')`}">
+                    <button class="del-btn" onclick="event.stopPropagation(); del('${safePath}')">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <i class="fas ${item.isDir ? 'fa-folder' : 'fa-file-alt'}"></i>
+                    <div class="name-tag">${item.name}</div>
+                </div>`;
+        }).join('');
+    }
+
+    function view(p) { window.open(`/api/view/${encodeURIComponent(p)}`, '_blank'); }
+
+    async function del(p) {
+        if(confirm("Bạn có chắc chắn muốn xóa?")) {
+            await fetch(`/api/delete/${encodeURIComponent(p)}`, { method: 'DELETE' });
+            go(currentPath);
+        }
+    }
+
+    go(""); // Bắt đầu ở thư mục gốc
+</script>
+</body>
+</html>
