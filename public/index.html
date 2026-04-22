@@ -2,61 +2,74 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Quản lý GLAM</title>
+    <title>Hệ thống GLAM - Đa tầng</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
         body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
-        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; color: #ffcc00; margin-bottom: 20px; }
-        .item { background: #1e1e1e; padding: 15px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #333; }
-        .item:hover { border-color: #ffcc00; }
-        .folder-icon { color: #ffcc00; margin-right: 10px; }
-        .file-icon { color: #aaa; margin-right: 10px; }
-        .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; text-decoration: none; }
+        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; color: #ffcc00; margin-bottom: 20px; font-weight: bold; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
+        .item-row { background: #1e1e1e; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; }
+        .item-row:hover { border-color: #ffcc00; background: #252525; }
+        .info { cursor: pointer; display: flex; align-items: center; flex-grow: 1; }
+        .folder-icon { color: #ffcc00; font-size: 24px; margin-right: 15px; }
+        .file-icon { color: #888; font-size: 24px; margin-right: 15px; }
+        .btn-view { background: #007bff; color: white; padding: 8px 15px; border-radius: 5px; text-decoration: none; font-size: 14px; }
     </style>
 </head>
 <body>
-    <h2 style="color:#ffcc00">HỆ THỐNG TÀI LIỆU GLAM</h2>
+    <h1 style="color:#ffcc00; text-align:center;">QUẢN LÝ TÀI LIỆU GLAM</h1>
+    
     <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
-    <div id="list"></div>
+    <div id="file-list"></div>
 
 <script>
     let currentPath = "";
 
     async function nav(path) {
         currentPath = path;
-        // Cập nhật Breadcrumb
+        
+        // Cập nhật Breadcrumb (Thanh dẫn đường)
         const bc = document.getElementById('bc');
         bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
-        let temp = "";
+        let step = "";
         path.split('/').filter(p => p).forEach(p => {
-            temp += (temp ? '/' : '') + p;
-            const target = temp;
+            step += (step ? '/' : '') + p;
+            const target = step;
             bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
         });
 
-        // Lấy danh sách
+        // Tải danh sách
         const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
         const items = await res.json();
         
-        const list = document.getElementById('list');
-        list.innerHTML = items.map(item => {
-            const itemPath = path ? `${path}/${item.name}` : item.name;
-            const safePath = itemPath.replace(/'/g, "\\'");
+        const listDiv = document.getElementById('file-list');
+        listDiv.innerHTML = items.map(item => {
+            const fullPath = path ? `${path}/${item.name}` : item.name;
+            const safePath = fullPath.replace(/'/g, "\\'");
 
             if (item.isDir) {
-                return `<div class="item" onclick="nav('${safePath}')">
-                            <span><i class="fas fa-folder folder-icon"></i><b>${item.name}</b></span>
-                            <span style="color:#ffcc00">Mở thư mục ></span>
+                // Nếu là thư mục: Bấm vào để MỞ
+                return `<div class="item-row" onclick="nav('${safePath}')">
+                            <div class="info">
+                                <i class="fas fa-folder folder-icon"></i>
+                                <span><b>${item.name}</b></span>
+                            </div>
+                            <span style="color:#ffcc00">Mở thư mục <i class="fas fa-chevron-right"></i></span>
                         </div>`;
             } else {
-                return `<div class="item">
-                            <span><i class="fas fa-file file-icon"></i>${item.name}</span>
-                            <a href="/api/view/${encodeURIComponent(itemPath)}" target="_blank" class="btn-view">Xem file</a>
+                // Nếu là file: Có nút XEM
+                return `<div class="item-row">
+                            <div class="info">
+                                <i class="fas fa-file-alt file-icon"></i>
+                                <span>${item.name}</span>
+                            </div>
+                            <a href="/api/view/${encodeURIComponent(fullPath)}" target="_blank" class="btn-view">Xem file</a>
                         </div>`;
             }
         }).join('');
     }
-    nav("");
+
+    nav(""); // Chạy lần đầu
 </script>
 </body>
 </html>
