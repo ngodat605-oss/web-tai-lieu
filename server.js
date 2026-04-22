@@ -10,77 +10,71 @@ app.use(fileUpload());
 const uploadDir = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// 1. Tạo thư mục mới
-app.get('/create-folder', (req, res) => {
-    let folder = req.query.folder;
-    if (!folder) return res.status(400).send('Thiếu tên thư mục');
-    const folderPath = path.join(uploadDir, folder);
-    if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
-    res.send("Đã tạo thư mục");
-});
+// 1. Lấy danh sách nội dung (File & Folder) theo đường dẫn
+app.get('/api/list/:path(*)', (req, res) => {
+    const relPath = decodeURIComponent(req.params.path || "");
+    const fullPath = path.join(uploadDir, relPath);
 
-// 2. Lấy danh sách thư mục
-app.get('/folders', (req, res) => {
-    fs.readdir(uploadDir, (err, folders) => {
-        res.json(folders || []);
+    if (!fs.existsSync(fullPath)) return res.json([]);
+
+    fs.readdir(fullPath, { withFileTypes: true }, (err, items) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const data = items.map(item => ({
+            name: item.name,
+            isDir: item.isDirectory()
+        }));
+        res.json(data);
     });
 });
 
-// 3. Tải file lên thư mục được chọn
-app.post('/upload/:folder', (req, res) => {
-    let folder = req.params.folder;
-    const folderPath = path.join(uploadDir, folder);
-    if (!fs.existsSync(folderPath)) fs.mkdirSync(folderPath);
+// 2. Tạo thư mục mới
+app.post('/api/mkdir', express.json(), (req, res) => {
+    const { parentPath, folderName } = req.body;
+    const target = path.join(uploadDir, parentPath, folderName);
+    if (!fs.existsSync(target)) {
+        fs.mkdirSync(target, { recursive: true });
+        res.send("OK");
+    } else {
+        res.status(400).send("Thư mục đã tồn tại");
+    }
+});
 
-    if (!req.files || Object.keys(req.files).length === 0) return res.status(400).send('Không có file nào');
+// 3. Tải lên file
+app.post('/api/upload/:path(*)', (req, res) => {
+    const relPath = decodeURIComponent(req.params.path || "");
+    const targetDir = path.join(uploadDir, relPath);
+
+    if (!req.files || !req.files.files) return res.status(400).send('No files');
     
     let files = req.files.files;
     if (!Array.isArray(files)) files = [files];
 
-    let uploadCount = 0;
     files.forEach(file => {
-        const filePath = path.join(folderPath, file.name);
-        file.mv(filePath, (err) => {
-            uploadCount++;
-            if (uploadCount === files.length) res.send("Upload thành công");
-        });
+        file.mv(path.join(targetDir, file.name));
     });
+    res.send("OK");
 });
 
-// 4. Lấy danh sách file trong thư mục
-app.get('/files/:folder', (req, res) => {
-    let folder = req.params.folder;
-    const folderPath = path.join(uploadDir, folder);
-    fs.readdir(folderPath, (err, files) => {
-        if (err) return res.json([]);
-        res.json(files.map(f => ({ name: f })));
-    });
-});
-
-// 5. Xem hoặc Tải file
-app.get('/file/:folder/:file', (req, res) => {
-    const filePath = path.join(uploadDir, req.params.folder, req.params.file);
+// 4. Xem/Tải file
+app.get('/api/view/:path(*)', (req, res) => {
+    const filePath = path.join(uploadDir, decodeURIComponent(req.params.path));
     if (fs.existsSync(filePath)) {
         res.sendFile(filePath);
     } else {
-        res.status(404).send("Không tìm thấy file");
+        res.status(404).send("File not found");
     }
 });
 
-// 6. Xóa file (Chức năng quan trọng)
-app.delete('/delete/:folder/:file', (req, res) => {
-    const filePath = path.join(uploadDir, req.params.folder, req.params.file);
-    if (fs.existsSync(filePath)) {
-        fs.unlink(filePath, (err) => {
-            if (err) return res.status(500).send("Lỗi khi xóa");
-            res.send("Xóa thành công");
-        });
+// 5. Xóa (Hỗ trợ xóa cả file và folder)
+app.delete('/api/delete/:path(*)', (req, res) => {
+    const target = path.join(uploadDir, decodeURIComponent(req.params.path));
+    if (fs.existsSync(target)) {
+        fs.rmSync(target, { recursive: true, force: true });
+        res.send("OK");
     } else {
-        res.status(404).send("File không tồn tại");
+        res.status(404).send("Not found");
     }
 });
 
-// Khởi chạy Server cho Render
-app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
-    console.log("Server đang chạy...");
-});
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => console.log(`GLAM Server running on port ${PORT}`));

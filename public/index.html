@@ -3,134 +3,135 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quản lý tài liệu GLAM</title>
+    <title>Hệ thống tài liệu GLAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #121212; color: white; margin: 0; padding: 0; }
+        :root { --primary: #ffcc00; --bg: #121212; --panel: #1e1e1e; }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: var(--bg); color: #e0e0e0; margin: 0; }
         
-        .header { 
-            background: #1e1e1e; padding: 20px 0; border-bottom: 3px solid #ffcc00;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-            position: sticky; top: 0; z-index: 1000;
-        }
-        .header .vn { font-size: 26px; font-weight: bold; color: #ffcc00; text-transform: uppercase; margin: 0; }
-        .header .cn { font-size: 20px; color: #ffcc00; margin-top: 5px; letter-spacing: 4px; }
+        /* Header trung tâm */
+        .header { background: var(--panel); padding: 25px; border-bottom: 3px solid var(--primary); text-align: center; }
+        .header h1 { color: var(--primary); margin: 0; font-size: 28px; text-transform: uppercase; }
+        .header p { color: var(--primary); margin: 5px 0 0; font-size: 18px; letter-spacing: 2px; }
 
-        .container { max-width: 900px; margin: 30px auto; padding: 20px; }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        
+        /* Điều hướng đường dẫn */
+        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; }
+        .breadcrumb span { color: var(--primary); cursor: pointer; }
 
-        .panel { background: #1a1a1a; padding: 20px; border-radius: 10px; border: 1px solid #333; margin-bottom: 30px; }
-        .group { display: flex; gap: 10px; margin-bottom: 15px; }
-        input { background: #333; color: white; border: 1px solid #444; padding: 10px; border-radius: 5px; flex: 1; }
-        button { cursor: pointer; font-weight: bold; border: none; padding: 10px 20px; border-radius: 5px; transition: 0.3s; color: white; }
-        .btn-blue { background: #007bff; }
-        .btn-green { background: #28a745; }
+        /* Bảng điều khiển */
+        .actions { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .card { background: var(--panel); padding: 15px; border-radius: 10px; border: 1px solid #333; }
+        input, button { padding: 10px; border-radius: 5px; border: 1px solid #444; }
+        input { background: #2a2a2a; color: white; width: calc(100% - 130px); }
+        button { background: var(--primary); color: black; font-weight: bold; cursor: pointer; transition: 0.3s; }
         button:hover { opacity: 0.8; }
+        .btn-upload { background: #28a745; color: white; width: 100%; margin-top: 10px; }
 
-        .title { color: #ffcc00; border-left: 4px solid #ffcc00; padding-left: 10px; margin: 25px 0 15px; }
-        .folder-list { display: flex; gap: 10px; flex-wrap: wrap; list-style: none; padding: 0; }
-        .folder-card { 
-            background: #252525; padding: 15px 20px; border-radius: 8px; cursor: pointer;
-            border: 1px solid #333; min-width: 100px; text-align: center; transition: 0.3s;
-        }
-        .folder-card i { font-size: 24px; display: block; margin-bottom: 5px; color: #ffcc00; }
-        .folder-card:hover, .folder-card.active { background: #ffcc00; color: black; }
-        .folder-card.active i { color: black; }
-
-        .file-table { width: 100%; border-collapse: collapse; background: #1a1a1a; margin-top: 10px; border-radius: 8px; overflow: hidden; }
-        .file-table th { background: #333; padding: 12px; color: #ffcc00; text-align: left; }
-        .file-table td { padding: 12px; border-bottom: 1px solid #222; }
-        .btn-s { padding: 5px 10px; font-size: 12px; text-decoration: none; border-radius: 3px; display: inline-block; margin-right: 5px; color: white; border: none; cursor: pointer; }
+        /* Danh sách mục */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; }
+        .item { background: var(--panel); padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #333; cursor: pointer; position: relative; }
+        .item:hover { border-color: var(--primary); }
+        .item i { font-size: 40px; margin-bottom: 10px; display: block; }
+        .item .folder-icon { color: var(--primary); }
+        .item .file-icon { color: #aaa; }
+        .item .name { font-size: 14px; word-break: break-all; height: 40px; overflow: hidden; }
+        
+        .btn-del { position: absolute; top: 5px; right: 5px; background: rgba(220,53,69,0.2); color: #ff4d4d; border: none; padding: 2px 6px; border-radius: 4px; font-size: 10px; }
+        .btn-del:hover { background: #dc3545; color: white; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div class="vn">CÔNG TY TNHH ĐIỆN TỬ GLAM</div>
-    <div class="cn">格琳电子有限公司</div>
+    <h1>Công Ty TNHH Điện Tử GLAM</h1>
+    <p>格琳电子有限公司</p>
 </div>
 
 <div class="container">
-    <div class="panel">
-        <div class="group">
-            <input type="text" id="fName" placeholder="Tên thư mục mới...">
-            <button class="btn-blue" onclick="makeFolder()">Tạo thư mục</button>
+    <div class="breadcrumb" id="breadcrumb">Vị trí: <span onclick="nav('')">Root</span></div>
+
+    <div class="actions">
+        <div class="card">
+            <input type="text" id="newFolder" placeholder="Tên thư mục con...">
+            <button onclick="createFolder()">Tạo</button>
         </div>
-        <div class="group" style="margin:0; pt:10px; border-top:1px solid #333; padding-top:15px;">
-            <input type="file" id="fInput" multiple>
-            <button class="btn-green" onclick="uploadFiles()">Tải lên</button>
+        <div class="card">
+            <input type="file" id="fileInp" multiple style="width: 100%;">
+            <button class="btn-upload" onclick="doUpload()">Tải lên vị trí này</button>
         </div>
     </div>
 
-    <h3 class="title">THƯ MỤC</h3>
-    <ul id="folderList" class="folder-list"></ul>
-
-    <h3 class="title" id="curFolder">DANH SÁCH TÀI LIỆU</h3>
-    <table class="file-table">
-        <thead><tr><th>Tên file</th><th width="150">Thao tác</th></tr></thead>
-        <tbody id="fileList"></tbody>
-    </table>
+    <div class="grid" id="explorer"></div>
 </div>
 
 <script>
-    let activeFolder = "";
+    let currentPath = "";
 
-    async function loadFolders() {
-        const res = await fetch('/folders');
-        const folders = await res.json();
-        document.getElementById('folderList').innerHTML = folders.map(f => `
-            <li class="folder-card ${activeFolder === f ? 'active' : ''}" onclick="select('${f}')">
-                <i class="fas fa-folder"></i> ${f}
-            </li>
+    async function nav(path) {
+        currentPath = path;
+        updateBreadcrumb();
+        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
+        const items = await res.json();
+        
+        const explorer = document.getElementById('explorer');
+        explorer.innerHTML = items.map(item => `
+            <div class="item" onclick="${item.isDir ? `nav('${path ? path+'/'+item.name : item.name}')` : `viewFile('${path ? path+'/'+item.name : item.name}')`}">
+                <button class="btn-del" onclick="event.stopPropagation(); deleteItem('${path ? path+'/'+item.name : item.name}')">Xóa</button>
+                <i class="fas ${item.isDir ? 'fa-folder folder-icon' : 'fa-file-alt file-icon'}"></i>
+                <div class="name">${item.name}</div>
+            </div>
         `).join('');
     }
 
-    function select(name) {
-        activeFolder = name;
-        document.getElementById('curFolder').innerText = "TÀI LIỆU: " + name;
-        loadFiles(name);
-        loadFolders();
-    }
-
-    async function makeFolder() {
-        const n = document.getElementById('fName').value;
-        if(!n) return;
-        await fetch(`/create-folder?folder=${n}`);
-        document.getElementById('fName').value = "";
-        loadFolders();
-    }
-
-    async function uploadFiles() {
-        if(!activeFolder) return alert("Chọn thư mục trước!");
-        const inp = document.getElementById('fInput');
-        if(inp.files.length === 0) return;
-        const fd = new FormData();
-        for(let f of inp.files) fd.append('files', f);
-        await fetch(`/upload/${activeFolder}`, { method: 'POST', body: fd });
-        inp.value = "";
-        loadFiles(activeFolder);
-    }
-
-    async function loadFiles(f) {
-        const res = await fetch(`/files/${f}`);
-        const files = await res.json();
-        document.getElementById('fileList').innerHTML = files.map(file => `
-            <tr>
-                <td>${file.name}</td>
-                <td>
-                    <a href="/file/${f}/${file.name}" target="_blank" class="btn-s" style="background:#17a2b8">Xem</a>
-                    <button onclick="delFile('${f}','${file.name}')" class="btn-s" style="background:#dc3545">Xóa</button>
-                </td>
-            </tr>
-        `).join('');
-    }
-
-    async function delFile(f, n) {
-        if(confirm("Xóa file này?")) {
-            await fetch(`/delete/${f}/${n}`, { method: 'DELETE' });
-            loadFiles(f);
+    function updateBreadcrumb() {
+        const div = document.getElementById('breadcrumb');
+        div.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Root</span>';
+        if (currentPath) {
+            let full = "";
+            currentPath.split('/').forEach(p => {
+                full += (full ? '/' : '') + p;
+                const pathVal = full;
+                div.innerHTML += ` / <span onclick="nav('${pathVal}')">${p}</span>`;
+            });
         }
     }
-    loadFolders();
+
+    async function createFolder() {
+        const name = document.getElementById('newFolder').value;
+        if(!name) return;
+        await fetch('/api/mkdir', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({ parentPath: currentPath, folderName: name })
+        });
+        document.getElementById('newFolder').value = "";
+        nav(currentPath);
+    }
+
+    async function doUpload() {
+        const inp = document.getElementById('fileInp');
+        if(!inp.files.length) return;
+        const fd = new FormData();
+        for(let f of inp.files) fd.append('files', f);
+        await fetch(`/api/upload/${encodeURIComponent(currentPath)}`, { method: 'POST', body: fd });
+        inp.value = "";
+        nav(currentPath);
+    }
+
+    function viewFile(path) {
+        window.open(`/api/view/${encodeURIComponent(path)}`, '_blank');
+    }
+
+    async function deleteItem(path) {
+        if(confirm("Bạn có chắc chắn muốn xóa?")) {
+            await fetch(`/api/delete/${encodeURIComponent(path)}`, { method: 'DELETE' });
+            nav(currentPath);
+        }
+    }
+
+    nav("");
 </script>
 </body>
 </html>
