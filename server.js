@@ -2,47 +2,42 @@ const express = require('express');
 const fileUpload = require('express-fileupload');
 const fs = require('fs');
 const path = require('path');
-
 const app = express();
 
 app.use(express.static('public'));
 app.use(fileUpload());
 
 const uploadDir = path.join(__dirname, 'uploads');
+if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir);
 
-// UPLOAD FILE
-app.post('/upload', (req, res) => {
-    let file = req.files.file;
+// API liệt kê nội dung: Quan trọng nhất để mở nhiều thư mục
+app.get('/api/list/:path(*)', (req, res) => {
+    const relPath = decodeURIComponent(req.params.path || "");
+    const fullPath = path.join(uploadDir, relPath);
 
-    // đổi tên để tránh lỗi trùng + ký tự đặc biệt
-    let fileName = Date.now() + "-" + file.name;
+    if (!fs.existsSync(fullPath)) return res.json([]);
 
-    file.mv(path.join(uploadDir, fileName), (err) => {
-        if (err) return res.send('error');
-        res.send('ok');
-    });
-});
-
-// LIST FILE
-app.get('/files', (req, res) => {
-    fs.readdir(uploadDir, (err, files) => {
-        res.json(files);
-    });
-});
-
-// DOWNLOAD FILE (FIX FULL)
-app.get('/files/:name', (req, res) => {
-    let fileName = decodeURIComponent(req.params.name);
-    let filePath = path.join(__dirname, 'uploads', fileName);
-
-    if (!fs.existsSync(filePath)) {
-        return res.send("File không tồn tại");
+    try {
+        const items = fs.readdirSync(fullPath, { withFileTypes: true });
+        const result = items.map(item => ({
+            name: item.name,
+            isDir: item.isDirectory() // Trả về đúng/sai nếu là thư mục
+        }));
+        res.json(result);
+    } catch (err) {
+        res.status(500).json([]);
     }
-
-    res.download(filePath);
 });
 
-// RUN SERVER
-app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
-    console.log("Server running...");
+// API xem file
+app.get('/api/view/:path(*)', (req, res) => {
+    const filePath = path.join(uploadDir, decodeURIComponent(req.params.path));
+    if (fs.existsSync(filePath)) {
+        res.sendFile(filePath);
+    } else {
+        res.status(404).send("File không tồn tại");
+    }
 });
+
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, '0.0.0.0', () => console.log("GLAM System Ready!"));

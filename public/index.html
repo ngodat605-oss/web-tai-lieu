@@ -1,58 +1,62 @@
 <!DOCTYPE html>
-<html>
+<html lang="vi">
 <head>
-<meta charset="UTF-8">
-<title>Upload tài liệu</title>
+    <meta charset="UTF-8">
+    <title>Quản lý GLAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; color: #ffcc00; margin-bottom: 20px; }
+        .item { background: #1e1e1e; padding: 15px; margin: 5px 0; border-radius: 5px; display: flex; justify-content: space-between; cursor: pointer; border: 1px solid #333; }
+        .item:hover { border-color: #ffcc00; }
+        .folder-icon { color: #ffcc00; margin-right: 10px; }
+        .file-icon { color: #aaa; margin-right: 10px; }
+        .btn-view { background: #17a2b8; color: white; border: none; padding: 5px 15px; border-radius: 3px; cursor: pointer; text-decoration: none; }
+    </style>
 </head>
 <body>
-
-<h2>Upload tài liệu</h2>
-
-<input type="file" id="file">
-<button onclick="upload()">Upload</button>
-
-<hr>
-
-<ul id="list"></ul>
+    <h2 style="color:#ffcc00">HỆ THỐNG TÀI LIỆU GLAM</h2>
+    <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
+    <div id="list"></div>
 
 <script>
+    let currentPath = "";
 
-async function upload() {
-    let file = document.getElementById('file').files[0];
+    async function nav(path) {
+        currentPath = path;
+        // Cập nhật Breadcrumb
+        const bc = document.getElementById('bc');
+        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
+        let temp = "";
+        path.split('/').filter(p => p).forEach(p => {
+            temp += (temp ? '/' : '') + p;
+            const target = temp;
+            bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
+        });
 
-    let form = new FormData();
-    form.append('file', file);
+        // Lấy danh sách
+        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
+        const items = await res.json();
+        
+        const list = document.getElementById('list');
+        list.innerHTML = items.map(item => {
+            const itemPath = path ? `${path}/${item.name}` : item.name;
+            const safePath = itemPath.replace(/'/g, "\\'");
 
-    await fetch('/upload', {
-        method: 'POST',
-        body: form
-    });
-
-    load();
-}
-
-async function load() {
-    let res = await fetch('/files');
-    let data = await res.json();
-
-    let list = document.getElementById('list');
-    list.innerHTML = '';
-
-    data.forEach(f => {
-
-        // FIX quan trọng để mở file tiếng Trung / ký tự đặc biệt
-        let url = "/files/" + encodeURIComponent(f);
-
-        list.innerHTML += `
-        <li>
-            <a href="${url}" target="_blank">${f}</a>
-        </li>`;
-    });
-}
-
-load();
-
+            if (item.isDir) {
+                return `<div class="item" onclick="nav('${safePath}')">
+                            <span><i class="fas fa-folder folder-icon"></i><b>${item.name}</b></span>
+                            <span style="color:#ffcc00">Mở thư mục ></span>
+                        </div>`;
+            } else {
+                return `<div class="item">
+                            <span><i class="fas fa-file file-icon"></i>${item.name}</span>
+                            <a href="/api/view/${encodeURIComponent(itemPath)}" target="_blank" class="btn-view">Xem file</a>
+                        </div>`;
+            }
+        }).join('');
+    }
+    nav("");
 </script>
-
 </body>
 </html>
