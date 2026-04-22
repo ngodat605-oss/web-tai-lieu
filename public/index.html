@@ -2,73 +2,95 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <title>Tài liệu GLAM - Đa tầng</title>
+    <title>Hệ thống Quản lý Tài liệu GLAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: sans-serif; background: #121212; color: white; margin: 0; }
-        .header { background: #1e1e1e; padding: 20px; text-align: center; border-bottom: 3px solid #ffcc00; }
-        .container { max-width: 1000px; margin: 20px auto; padding: 20px; }
-        .breadcrumb { background: #222; padding: 10px; border-radius: 5px; margin-bottom: 20px; color: #ffcc00; }
-        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
-        .item { background: #1a1a1a; padding: 20px; border-radius: 10px; text-align: center; cursor: pointer; border: 1px solid #333; position: relative; }
-        .item:hover { border-color: #ffcc00; }
-        .item i { font-size: 40px; display: block; margin-bottom: 10px; }
-        .fa-folder { color: #ffcc00; }
-        .name { font-size: 13px; word-break: break-all; }
-        .btn-del { position: absolute; top: 5px; right: 5px; color: red; background: none; border: none; cursor: pointer; }
+        :root { --accent: #ffcc00; --bg: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; }
+        .header { background: var(--card); padding: 20px; text-align: center; border-bottom: 3px solid var(--accent); }
+        .container { max-width: 1000px; margin: 20px auto; padding: 0 20px; }
+        
+        /* Thanh điều hướng vị trí */
+        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 20px; color: var(--accent); font-weight: bold; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; }
+        .breadcrumb span:hover { color: white; }
+
+        /* Lưới hiển thị Folder/File */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 20px; }
+        .item { background: var(--card); padding: 20px; border-radius: 12px; text-align: center; cursor: pointer; border: 1px solid #333; transition: 0.2s; position: relative; }
+        .item:hover { border-color: var(--accent); transform: translateY(-5px); }
+        .item i { font-size: 50px; display: block; margin-bottom: 10px; }
+        .fa-folder { color: var(--accent); }
+        .fa-file-alt { color: #888; }
+        .name { font-size: 13px; word-break: break-all; height: 38px; overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        
+        .btn-del { position: absolute; top: 8px; right: 8px; background: none; border: none; color: #ff4d4d; cursor: pointer; font-size: 16px; opacity: 0; }
+        .item:hover .btn-del { opacity: 1; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <h1 style="color:#ffcc00; margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
+    <h1 style="color:var(--accent); margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h1>
+    <p style="color:var(--accent); margin:5px 0 0;">格琳电子有限公司</p>
 </div>
 
 <div class="container">
     <div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
-    <div class="grid" id="list"></div>
+    <div class="grid" id="explorer"></div>
 </div>
 
 <script>
     let currentPath = "";
 
+    // Hàm điều hướng
     async function nav(path) {
         currentPath = path;
-        // Cập nhật thanh điều hướng
+        
+        // Vẽ Breadcrumb
         const bc = document.getElementById('bc');
         bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
-        let temp = "";
-        path.split('/').filter(p => p).forEach(p => {
-            temp += (temp ? '/' : '') + p;
-            const target = temp;
-            bc.innerHTML += ` / <span onclick="nav('${target}')">${p}</span>`;
+        let parts = path.split('/').filter(p => p);
+        let step = "";
+        parts.forEach(p => {
+            step += (step ? '/' : '') + p;
+            const target = step;
+            bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
         });
 
-        // Lấy dữ liệu
+        // Tải dữ liệu từ Server
         const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
         const items = await res.json();
         
-        const div = document.getElementById('list');
-        div.innerHTML = items.map(item => `
-            <div class="item" onclick="${item.isDir ? `nav('${path ? path+'/'+item.name : item.name}')` : `view('${path ? path+'/'+item.name : item.name}')`}">
-                <button class="btn-del" onclick="event.stopPropagation(); del('${path ? path+'/'+item.name : item.name}')">X</button>
-                <i class="fas ${item.isDir ? 'fa-folder' : 'fa-file-alt'}"></i>
-                <div class="name">${item.name}</div>
-            </div>
-        `).join('');
+        const explorer = document.getElementById('explorer');
+        explorer.innerHTML = items.map(item => {
+            const fullPath = path ? `${path}/${item.name}` : item.name;
+            const safePath = fullPath.replace(/'/g, "\\'");
+            
+            return `
+                <div class="item" onclick="${item.isDir ? `nav('${safePath}')` : `view('${safePath}')`}">
+                    <button class="btn-del" onclick="event.stopPropagation(); del('${safePath}')">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                    <i class="fas ${item.isDir ? 'fa-folder' : 'fa-file-alt'}"></i>
+                    <div class="name">${item.name}</div>
+                </div>
+            `;
+        }).join('');
     }
 
-    function view(p) { window.open(`/api/view/${encodeURIComponent(p)}`, '_blank'); }
-    
+    function view(p) {
+        window.open(`/api/view/${encodeURIComponent(p)}`, '_blank');
+    }
+
     async function del(p) {
-        if(confirm("Xóa mục này?")) {
+        if(confirm("Xóa mục này và tất cả nội dung bên trong?")) {
             await fetch(`/api/delete/${encodeURIComponent(p)}`, { method: 'DELETE' });
             nav(currentPath);
         }
     }
 
-    nav(""); // Chạy lần đầu
+    nav(""); // Khởi động trang gốc
 </script>
 </body>
 </html>
