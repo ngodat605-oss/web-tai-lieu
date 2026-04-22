@@ -8,36 +8,64 @@ const app = express();
 app.use(express.static('public'));
 app.use(fileUpload());
 
-const uploadDir = path.join(__dirname, 'uploads');
+const baseDir = path.join(__dirname, 'uploads');
 
-/* UPLOAD FILE */
-app.post('/upload', (req, res) => {
+/* tạo folder nếu chưa có */
+if (!fs.existsSync(baseDir)) {
+    fs.mkdirSync(baseDir);
+}
+
+/* upload vào folder */
+app.post('/upload/:folder', (req, res) => {
+    let folder = req.params.folder;
+    let dir = path.join(baseDir, folder);
+
+    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
+
     let file = req.files.file;
 
-    // ⭐ FIX: đổi tên file để không lỗi ký tự đặc biệt
     let safeName = Date.now() + "-" + file.name;
 
-    file.mv(path.join(uploadDir, safeName), (err) => {
+    file.mv(path.join(dir, safeName), err => {
         if (err) return res.send('error');
         res.send('ok');
     });
 });
 
-/* LIST FILE */
-app.get('/files', (req, res) => {
-    fs.readdir(uploadDir, (err, files) => {
+/* list file trong folder */
+app.get('/files/:folder', (req, res) => {
+    let folder = req.params.folder;
+    let dir = path.join(baseDir, folder);
+
+    if (!fs.existsSync(dir)) return res.json([]);
+
+    fs.readdir(dir, (err, files) => {
         res.json(files);
     });
 });
 
-/* DOWNLOAD FILE (FIX FULL UTF-8 + & + tiếng Trung) */
-app.get('/files/:name', (req, res) => {
-    let fileName = decodeURIComponent(req.params.name);
-    let filePath = path.join(uploadDir, fileName);
+/* download file */
+app.get('/file/:folder/:name', (req, res) => {
+    let folder = req.params.folder;
+    let name = decodeURIComponent(req.params.name);
+
+    let filePath = path.join(baseDir, folder, name);
     res.download(filePath);
 });
 
-/* RUN SERVER */
+/* delete file */
+app.delete('/file/:folder/:name', (req, res) => {
+    let folder = req.params.folder;
+    let name = decodeURIComponent(req.params.name);
+
+    let filePath = path.join(baseDir, folder, name);
+
+    fs.unlinkSync(filePath);
+
+    res.send('deleted');
+});
+
+/* chạy server */
 app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
-    console.log("Server running");
+    console.log("Drive running");
 });

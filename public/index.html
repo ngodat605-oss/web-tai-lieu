@@ -2,20 +2,30 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Upload File</title>
+<title>Mini Google Drive</title>
 </head>
 <body>
 
-<h2>Upload file</h2>
+<h2>📁 Google Drive Mini</h2>
+
+<input id="folder" placeholder="Tên thư mục">
+<button onclick="openFolder()">Mở thư mục</button>
+
+<hr>
 
 <input type="file" id="file">
 <button onclick="upload()">Upload</button>
 
-<hr>
-
 <ul id="list"></ul>
 
 <script>
+
+let currentFolder = "default";
+
+function openFolder() {
+    currentFolder = document.getElementById("folder").value || "default";
+    load();
+}
 
 async function upload() {
     let file = document.getElementById('file').files[0];
@@ -23,7 +33,7 @@ async function upload() {
     let form = new FormData();
     form.append('file', file);
 
-    await fetch('/upload', {
+    await fetch('/upload/' + currentFolder, {
         method: 'POST',
         body: form
     });
@@ -32,7 +42,7 @@ async function upload() {
 }
 
 async function load() {
-    let res = await fetch('/files');
+    let res = await fetch('/files/' + currentFolder);
     let data = await res.json();
 
     let list = document.getElementById('list');
@@ -40,13 +50,21 @@ async function load() {
 
     data.forEach(f => {
 
-        // ⭐ FIX QUAN TRỌNG
-        let url = "/files/" + encodeURIComponent(f);
+        let url = `/file/${currentFolder}/${encodeURIComponent(f)}`;
 
-        list.innerHTML += `<li>
+        list.innerHTML += `
+        <li>
             <a href="${url}">${f}</a>
+            <button onclick="del('${f}')">X</button>
         </li>`;
     });
+}
+
+async function del(name) {
+    await fetch(`/file/${currentFolder}/${encodeURIComponent(name)}`, {
+        method: 'DELETE'
+    });
+    load();
 }
 
 load();
