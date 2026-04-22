@@ -2,74 +2,93 @@
 <html lang="vi">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Kho Tài Liệu Của Đạt</title>
+    <title>Quản lý Hồ sơ Đa tầng GLAM</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f4f7f6; margin: 0; padding: 20px; display: flex; justify-content: center; }
-        .container { background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.1); width: 100%; max-width: 600px; }
-        h2 { color: #333; text-align: center; border-bottom: 2px solid #eee; padding-bottom: 10px; }
-        .upload-section { display: flex; gap: 10px; margin-bottom: 30px; background: #f9f9f9; padding: 15px; border-radius: 8px; }
-        input[type="file"] { flex-grow: 1; }
-        button { cursor: pointer; border: none; border-radius: 5px; padding: 8px 15px; transition: 0.3s; }
-        .btn-upload { background: #28a745; color: white; }
-        .btn-upload:hover { background: #218838; }
-        .file-item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #eee; transition: background 0.2s; }
-        .file-item:hover { background: #fcfcfc; }
-        .file-item a { text-decoration: none; color: #007bff; font-weight: 500; overflow: hidden; text-overflow: ellipsis; }
-        .btn-delete { background: #ff4d4d; color: white; font-size: 12px; }
-        .btn-delete:hover { background: #cc0000; }
-        ul { list-style: none; padding: 0; }
+        body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+        .header { text-align: center; border-bottom: 2px solid #ffcc00; padding-bottom: 10px; margin-bottom: 20px; }
+        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; color: #ffcc00; margin-bottom: 15px; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin: 0 5px; }
+        
+        .tool-bar { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-bottom: 20px; display: flex; gap: 10px; }
+        input { padding: 8px; border-radius: 4px; border: 1px solid #444; background: #000; color: white; flex-grow: 1; }
+        .btn-add { background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; }
+
+        .item { background: #1a1a1a; padding: 15px; margin: 8px 0; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; border: 1px solid #333; transition: 0.2s; }
+        .item:hover { border-color: #ffcc00; background: #222; }
+        .folder-name { color: #ffcc00; font-weight: bold; cursor: pointer; display: flex; align-items: center; }
+        .file-name { color: #ddd; display: flex; align-items: center; }
+        i { margin-right: 12px; font-size: 20px; }
+        .btn-view { background: #007bff; color: white; text-decoration: none; padding: 5px 12px; border-radius: 4px; font-size: 13px; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>📁 KHO TÀI LIỆU</h2>
-    
-    <div class="upload-section">
-        <input type="file" id="file">
-        <button class="btn-upload" onclick="upload()">Tải lên</button>
-    </div>
-
-    <ul id="list"></ul>
+<div class="header">
+    <h2 style="color:#ffcc00; margin:0;">CÔNG TY TNHH ĐIỆN TỬ GLAM</h2>
+    <small>格琳电子有限公司</small>
 </div>
 
-<script>
-    async function upload() {
-        let fileInput = document.getElementById('file');
-        if (!fileInput.files[0]) return alert("Vui lòng chọn file!");
-        
-        let form = new FormData();
-        form.append('file', fileInput.files[0]);
+<div class="tool-bar">
+    <input type="text" id="newFolderName" placeholder="Nhập tên thư mục mới...">
+    <button class="btn-add" onclick="createFolder()">+ Tạo thư mục</button>
+</div>
 
-        await fetch('/upload', { method: 'POST', body: form });
-        fileInput.value = ''; // Reset input
-        load();
+<div class="breadcrumb" id="bc">Vị trí: <span onclick="nav('')">Gốc</span></div>
+<div id="explorer"></div>
+
+<script>
+    let currentPath = "";
+
+    async function nav(path) {
+        currentPath = path;
+        const bc = document.getElementById('bc');
+        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
+        let step = "";
+        path.split('/').filter(p => p).forEach(p => {
+            step += (step ? '/' : '') + p;
+            bc.innerHTML += ` / <span onclick="nav('${step.replace(/'/g, "\\'")}')">${p}</span>`;
+        });
+
+        const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
+        const items = await res.json();
+        const explorer = document.getElementById('explorer');
+        
+        explorer.innerHTML = items.map(item => {
+            const fullPath = currentPath ? `${currentPath}/${item.name}` : item.name;
+            if (item.isDir) {
+                return `<div class="item" onclick="nav('${fullPath.replace(/'/g, "\\'")}')">
+                            <span class="folder-name"><i class="fas fa-folder"></i>${item.name}</span>
+                            <span style="color:#666;">Thư mục <i class="fas fa-chevron-right"></i></span>
+                        </div>`;
+            } else {
+                return `<div class="item">
+                            <span class="file-name"><i class="fas fa-file-alt"></i>${item.name}</span>
+                            <a href="/api/view/${encodeURIComponent(fullPath)}" target="_blank" class="btn-view">Xem file</a>
+                        </div>`;
+            }
+        }).join('');
     }
 
-    async function removeFile(name) {
-        if (confirm(`Bạn muốn xóa file: ${name}?`)) {
-            await fetch(`/delete/${name}`, { method: 'DELETE' });
-            load();
+    async function createFolder() {
+        const name = document.getElementById('newFolderName').value;
+        if (!name) return alert("Vui lòng nhập tên!");
+        
+        const res = await fetch('/api/create-folder', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ folderPath: currentPath, folderName: name })
+        });
+
+        if (res.ok) {
+            document.getElementById('newFolderName').value = "";
+            nav(currentPath);
+        } else {
+            alert("Lỗi: Có thể thư mục đã tồn tại");
         }
     }
 
-    async function load() {
-        let res = await fetch('/files');
-        let data = await res.json();
-        let list = document.getElementById('list');
-        list.innerHTML = '';
-
-        data.forEach(f => {
-            list.innerHTML += `
-                <li class="file-item">
-                    <a href="/files/${f}" target="_blank">📄 ${f}</a>
-                    <button class="btn-delete" onclick="removeFile('${f}')">Xóa</button>
-                </li>`;
-        });
-    }
-    load();
+    nav("");
 </script>
-
 </body>
 </html>
