@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Drive mini</title>
+</head>
+<body>
+
+<h2>Tạo thư mục + Upload file</h2>
+
+<input id="folder" placeholder="Nhập tên thư mục">
+<br><br>
+
+<input type="file" id="file">
+<button onclick="upload()">Upload</button>
+
+<hr>
+
+<h3>Thư mục</h3>
+<ul id="folders"></ul>
+
+<h3>File trong thư mục</h3>
+<ul id="files"></ul>
+
+<script>
+
+let currentFolder = "";
+
+/* 📤 upload file */
+async function upload() {
+    const file = document.getElementById('file').files[0];
+    const folder = document.getElementById('folder').value;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    await fetch('/upload', {
+        method: 'POST',
+        body: formData
+    });
+
+    loadFolders();
+}
+
+/* 📁 load folder */
+async function loadFolders() {
+    const res = await fetch('/folders');
+    const data = await res.json();
+
+    const list = document.getElementById('folders');
+    list.innerHTML = "";
+
+    data.forEach(f => {
+        list.innerHTML += `<li onclick="openFolder('${f}')">📁 ${f}</li>`;
+    });
+}
+
+/* 📄 mở folder */
+async function openFolder(folder) {
+    currentFolder = folder;
+
+    const res = await fetch('/files/' + folder);
+    const files = await res.json();
+
+    const list = document.getElementById('files');
+    list.innerHTML = "";
+
+    files.forEach(f => {
+        list.innerHTML += `
+            <li>
+                <a href="/file/${folder}/${encodeURIComponent(f)}">
+                    ${f}
+                </a>
+            </li>
+        `;
+    });
+}
+
+loadFolders();
+
+</script>
+
+</body>
+</html><!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<title>Drive mini</title>
+</head>
+<body>
+
+<h2>Tạo thư mục + Upload file</h2>
+
+<input id="folder" placeholder="Nhập tên thư mục">
+<br><br>
+
+<input type="file" id="file">
+<button onclick="upload()">Upload</button>
+
+<hr>
+
+<h3>Thư mục</h3>
+<ul id="folders"></ul>
+
+<h3>File trong thư mục</h3>
+<ul id="files"></ul>
+
+<script>
+
+let currentFolder = "";
+
+/* 📤 upload file */
+async function upload() {
+    const file = document.getElementById('file').files[0];
+    const folder = document.getElementById('folder').value;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('folder', folder);
+
+    await fetch('/upload', {
+        method: 'POST',
+        body: formData
+    });
+
+    loadFolders();
+}
+
+/* 📁 load folder */
+async function loadFolders() {
+    const res = await fetch('/folders');
+    const data = await res.json();
+
+    const list = document.getElementById('folders');
+    list.innerHTML = "";
+
+    data.forEach(f => {
+        list.innerHTML += `<li onclick="openFolder('${f}')">📁 ${f}</li>`;
+    });
+}
+
+/* 📄 mở folder */
+async function openFolder(folder) {
+    currentFolder = folder;
+
+    const res = await fetch('/files/' + folder);
+    const files = await res.json();
+
+    const list = document.getElementById('files');
+    list.innerHTML = "";
+
+    files.forEach(f => {
+        list.innerHTML += `
+            <li>
+                <a href="/file/${folder}/${encodeURIComponent(f)}">
+                    ${f}
+                </a>
+            </li>
+        `;
+    });
+}
+
+loadFolders();
+
+</script>
+
+</body>
+</html>
