@@ -8,64 +8,41 @@ const app = express();
 app.use(express.static('public'));
 app.use(fileUpload());
 
-const baseDir = path.join(__dirname, 'uploads');
+const uploadDir = path.join(__dirname, 'uploads');
 
-/* tạo folder nếu chưa có */
-if (!fs.existsSync(baseDir)) {
-    fs.mkdirSync(baseDir);
-}
-
-/* upload vào folder */
-app.post('/upload/:folder', (req, res) => {
-    let folder = req.params.folder;
-    let dir = path.join(baseDir, folder);
-
-    if (!fs.existsSync(dir)) fs.mkdirSync(dir);
-
+// UPLOAD FILE
+app.post('/upload', (req, res) => {
     let file = req.files.file;
 
-    let safeName = Date.now() + "-" + file.name;
+    // đổi tên để tránh lỗi trùng + ký tự đặc biệt
+    let fileName = Date.now() + "-" + file.name;
 
-    file.mv(path.join(dir, safeName), err => {
+    file.mv(path.join(uploadDir, fileName), (err) => {
         if (err) return res.send('error');
         res.send('ok');
     });
 });
 
-/* list file trong folder */
-app.get('/files/:folder', (req, res) => {
-    let folder = req.params.folder;
-    let dir = path.join(baseDir, folder);
-
-    if (!fs.existsSync(dir)) return res.json([]);
-
-    fs.readdir(dir, (err, files) => {
+// LIST FILE
+app.get('/files', (req, res) => {
+    fs.readdir(uploadDir, (err, files) => {
         res.json(files);
     });
 });
 
-/* download file */
-app.get('/file/:folder/:name', (req, res) => {
-    let folder = req.params.folder;
-    let name = decodeURIComponent(req.params.name);
+// DOWNLOAD FILE (FIX FULL)
+app.get('/files/:name', (req, res) => {
+    let fileName = decodeURIComponent(req.params.name);
+    let filePath = path.join(__dirname, 'uploads', fileName);
 
-    let filePath = path.join(baseDir, folder, name);
+    if (!fs.existsSync(filePath)) {
+        return res.send("File không tồn tại");
+    }
+
     res.download(filePath);
 });
 
-/* delete file */
-app.delete('/file/:folder/:name', (req, res) => {
-    let folder = req.params.folder;
-    let name = decodeURIComponent(req.params.name);
-
-    let filePath = path.join(baseDir, folder, name);
-
-    fs.unlinkSync(filePath);
-
-    res.send('deleted');
-});
-
-/* chạy server */
+// RUN SERVER
 app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
-    console.log("Drive running");
+    console.log("Server running...");
 });
