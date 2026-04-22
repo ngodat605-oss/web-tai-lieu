@@ -77,6 +77,16 @@ async function openFolder(folder) {
     });
 }
 
+async function removeFile(folder, file) {
+    if (confirm(`Bạn muốn xóa file ${file} trong thư mục ${folder}?`)) {
+        const res = await fetch(`/delete/${folder}/${file}`, { method: 'DELETE' });
+        if (res.ok) {
+            loadFiles(folder); // Xóa xong nạp lại danh sách file
+        } else {
+            alert("Lỗi khi xóa!");
+        }
+    }
+}
 loadFolders();
 
 </script>
@@ -136,7 +146,12 @@ async function loadFolders() {
     list.innerHTML = "";
 
     data.forEach(f => {
-        list.innerHTML += `<li onclick="openFolder('${f}')">📁 ${f}</li>`;
+        list.innerHTML += `
+    <li style="margin-bottom:10px; border-bottom:1px solid #444; padding-bottom:5px;">
+        <span style="color:#ffcc00">${f}</span><br>
+        <a href="/file/${folder}/${f}" target="_blank" style="color:#007bff; text-decoration:none; margin-right:10px;">Xem trước</a>
+        <button onclick="removeFile('${folder}', '${f}')" style="background:red; color:white; border:none; padding:3px 8px; cursor:pointer; border-radius:3px;">Xóa</button>
+    </li>`;
     });
 }
 
