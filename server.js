@@ -66,6 +66,18 @@ app.get('/files/:name', (req, res) => {
     res.download(path.join(uploadDir, req.params.name));
 });
 
+/* 🗑️ CHỨC NĂNG XÓA FILE */
+app.delete('/delete/:folder/:file', (req, res) => {
+    const filePath = path.join(uploadDir, req.params.folder, req.params.file);
+    if (fs.existsSync(filePath)) {
+        fs.unlink(filePath, (err) => {
+            if (err) return res.status(500).send(err);
+            res.send("Xóa thành công");
+        });
+    } else {
+        res.status(404).send("Không tìm thấy file");
+    }
+});
 /* ⭐ QUAN TRỌNG CHO WEB VĨNH VIỄN */
 app.listen(process.env.PORT || 3000, '0.0.0.0', () => {
     console.log("Server running");
