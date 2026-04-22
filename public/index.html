@@ -5,35 +5,37 @@
     <title>Hệ thống Tài liệu GLAM</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <style>
-        :root { --accent: #ffcc00; --bg: #121212; --card: #1e1e1e; }
-        body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: white; margin: 0; }
+        :root { --gold: #ffcc00; --dark: #121212; --card: #1e1e1e; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background: var(--dark); color: white; margin: 0; padding-bottom: 50px; }
         
-        /* Tiêu đề công ty */
-        .header { background: var(--card); padding: 30px; text-align: center; border-bottom: 4px solid var(--accent); }
-        .header h1 { color: var(--accent); margin: 0; font-size: 32px; letter-spacing: 1px; }
-        .header p { color: var(--accent); margin: 5px 0 0; font-size: 20px; }
+        /* Tên công ty GLAM */
+        .header { background: var(--card); padding: 40px 20px; text-align: center; border-bottom: 5px solid var(--gold); }
+        .header h1 { color: var(--gold); margin: 0; font-size: 35px; text-transform: uppercase; }
+        .header p { color: var(--gold); margin: 10px 0 0; font-size: 22px; letter-spacing: 2px; }
 
-        .container { max-width: 1200px; margin: 20px auto; padding: 0 20px; }
+        .container { max-width: 1200px; margin: 30px auto; padding: 0 20px; }
         
         /* Thanh dẫn đường */
-        .breadcrumb { background: #222; padding: 12px; border-radius: 8px; margin-bottom: 25px; color: var(--accent); font-size: 16px; border: 1px solid #333; }
-        .breadcrumb span { cursor: pointer; text-decoration: underline; margin-right: 5px; }
+        .breadcrumb { background: #252525; padding: 15px; border-radius: 10px; margin-bottom: 30px; color: var(--gold); border-left: 5px solid var(--gold); font-size: 18px; }
+        .breadcrumb span { cursor: pointer; text-decoration: underline; margin-right: 8px; }
 
-        /* Lưới thư mục (Ô vuông lớn như cũ) */
-        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; margin-bottom: 40px; }
-        .folder-box { background: var(--card); padding: 30px; border-radius: 15px; text-align: center; border: 2px solid #333; cursor: pointer; transition: 0.3s; }
-        .folder-box:hover { border-color: var(--accent); transform: translateY(-5px); background: #252525; }
-        .folder-box i { font-size: 55px; color: var(--accent); margin-bottom: 15px; display: block; }
-        .folder-name { font-weight: bold; font-size: 16px; color: white; word-break: break-all; }
+        /* Lưới thư mục ô vuông lớn */
+        .folder-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 25px; margin-bottom: 50px; }
+        .folder-box { background: var(--card); padding: 35px 20px; border-radius: 15px; text-align: center; border: 2px solid #333; cursor: pointer; transition: 0.3s; }
+        .folder-box:hover { border-color: var(--gold); transform: translateY(-8px); background: #2a2a2a; }
+        .folder-box i { font-size: 60px; color: var(--gold); margin-bottom: 20px; display: block; }
+        .folder-name { font-weight: bold; font-size: 18px; color: #fff; line-height: 1.4; word-break: break-all; }
 
-        /* Danh sách file bên dưới */
-        .file-section-title { color: var(--accent); border-left: 4px solid var(--accent); padding-left: 10px; margin-bottom: 15px; font-size: 20px; }
-        .file-list { background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #333; color: var(--accent); padding: 15px; text-align: left; }
-        td { padding: 15px; border-bottom: 1px solid #222; }
-        .btn-view { color: white; background: #007bff; padding: 6px 15px; border-radius: 5px; text-decoration: none; font-size: 13px; font-weight: bold; }
+        /* Bảng danh sách Files bên dưới */
+        .file-list-title { color: var(--gold); font-size: 22px; margin-bottom: 15px; padding-left: 10px; border-left: 4px solid var(--gold); }
+        .file-table { width: 100%; border-collapse: collapse; background: #1a1a1a; border-radius: 12px; overflow: hidden; border: 1px solid #333; }
+        .file-table th { background: #333; color: var(--gold); padding: 15px; text-align: left; }
+        .file-table td { padding: 15px; border-bottom: 1px solid #282828; }
+        .btn-view { background: #007bff; color: white; padding: 8px 20px; border-radius: 6px; text-decoration: none; font-size: 14px; font-weight: bold; transition: 0.2s; }
         .btn-view:hover { background: #0056b3; }
+        
+        i.fa-file-pdf { color: #ff4444; margin-right: 10px; }
+        i.fa-file-excel { color: #28a745; margin-right: 10px; }
     </style>
 </head>
 <body>
@@ -44,22 +46,20 @@
 </div>
 
 <div class="container">
-    <div class="breadcrumb" id="bc-path">Vị trí: <span onclick="nav('')">Thư mục gốc</span></div>
+    <div class="breadcrumb" id="path-bar">Vị trí: <span onclick="nav('')">Gốc</span></div>
 
-    <div class="folder-grid" id="folder-grid"></div>
+    <div class="folder-grid" id="folder-area"></div>
 
-    <div class="file-section-title"><i class="fas fa-file-alt"></i> DANH SÁCH TÀI LIỆU</div>
-    <div class="file-list">
-        <table>
-            <thead>
-                <tr>
-                    <th>Tên tập tin</th>
-                    <th width="100">Thao tác</th>
-                </tr>
-            </thead>
-            <tbody id="file-list"></tbody>
-        </table>
-    </div>
+    <div class="file-list-title"><i class="fas fa-file-alt"></i> DANH SÁCH TẬP TIN</div>
+    <table class="file-table">
+        <thead>
+            <tr>
+                <th>Tên tài liệu</th>
+                <th width="120">Thao tác</th>
+            </tr>
+        </thead>
+        <tbody id="file-area"></tbody>
+    </table>
 </div>
 
 <script>
@@ -68,31 +68,31 @@
     async function nav(path) {
         currentPath = path;
         
-        // Cập nhật Breadcrumb
-        const bc = document.getElementById('bc-path');
-        bc.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
+        // 1. Cập nhật thanh dẫn đường (Breadcrumb)
+        const pathBar = document.getElementById('path-bar');
+        pathBar.innerHTML = 'Vị trí: <span onclick="nav(\'\')">Gốc</span>';
         let step = "";
         path.split('/').filter(p => p).forEach(p => {
             step += (step ? '/' : '') + p;
             const target = step;
-            bc.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
+            pathBar.innerHTML += ` / <span onclick="nav('${target.replace(/'/g, "\\'")}')">${p}</span>`;
         });
 
-        // Gọi API lấy dữ liệu
+        // 2. Lấy dữ liệu từ Server
         const res = await fetch(`/api/list/${encodeURIComponent(path)}`);
         const items = await res.json();
         
-        const folderGrid = document.getElementById('folder-grid');
-        const fileList = document.getElementById('file-list');
+        const folderArea = document.getElementById('folder-area');
+        const fileArea = document.getElementById('file-area');
         
-        // Phân loại Folder và File
+        // Tách riêng Folder và File
         const folders = items.filter(i => i.isDir);
         const files = items.filter(i => !i.isDir);
 
-        // Hiển thị Thư mục thành ô vuông lớn
-        folderGrid.innerHTML = folders.map(f => {
-            const fullPath = currentPath ? `${currentPath}/${f.name}` : f.name;
-            const safePath = fullPath.replace(/'/g, "\\'");
+        // 3. Hiển thị Folder (Dạng ô vuông lớn)
+        folderArea.innerHTML = folders.map(f => {
+            const p = currentPath ? `${currentPath}/${f.name}` : f.name;
+            const safePath = p.replace(/'/g, "\\'");
             return `
                 <div class="folder-box" onclick="nav('${safePath}')">
                     <i class="fas fa-folder"></i>
@@ -100,22 +100,28 @@
                 </div>`;
         }).join('');
 
-        // Hiển thị File vào bảng bên dưới
-        fileList.innerHTML = files.map(f => {
-            const fullPath = currentPath ? `${currentPath}/${f.name}` : f.name;
+        // 4. Hiển thị File (Dạng danh sách bảng)
+        fileArea.innerHTML = files.map(f => {
+            const p = currentPath ? `${currentPath}/${f.name}` : f.name;
+            // Chọn biểu tượng theo loại file
+            let icon = 'fa-file-alt';
+            if(f.name.toLowerCase().endsWith('.pdf')) icon = 'fa-file-pdf';
+            if(f.name.toLowerCase().endsWith('.xlsx') || f.name.toLowerCase().endsWith('.xls')) icon = 'fa-file-excel';
+
             return `
                 <tr>
-                    <td><i class="fas fa-file-pdf" style="margin-right:10px; color:#ff4444;"></i>${f.name}</td>
-                    <td><a href="/api/view/${encodeURIComponent(fullPath)}" target="_blank" class="btn-view">XEM</a></td>
+                    <td><i class="fas ${icon}"></i>${f.name}</td>
+                    <td><a href="/api/view/${encodeURIComponent(p)}" target="_blank" class="btn-view">XEM</a></td>
                 </tr>`;
         }).join('');
         
-        if(files.length === 0) {
-            fileList.innerHTML = '<tr><td colspan="2" style="text-align:center; color:#666;">Không có tệp tin nào trong thư mục này</td></tr>';
+        // Thông báo nếu trống
+        if (folders.length === 0 && files.length === 0) {
+            folderArea.innerHTML = '<p style="color:#666;">Thư mục này trống</p>';
         }
     }
 
-    // Khởi động
+    // Khởi động trang web
     nav("");
 </script>
 </body>
